@@ -79,6 +79,9 @@ class Parse:
             if character not in self.skip_list:
                 term += character  # keep building the term
             if (character == ' ' or character == '/' or character == ":" or character == '"' or character == '\n') and len(term) > 0:
+                if term=='RT' or term=='rt':
+                    term=''
+                    continue
                 self.addToken(prev_term, term, term_dict)
                 prev_term = term
                 term = ''
@@ -164,6 +167,9 @@ class Parse:
             if i not in self.skip_list:
                 word += i
             if (i == '/' or i == ":" or i == '"') and len(word) >= 1:
+                if word=='https' or word=='HTTPS' or word=='TWITTER.com' or word=='twitter.com' or word == "t.co":
+                    word=''
+                    continue
                 self.add_term_to_dict(word, term_dict)
                 word = ''
         if len(word) >= 1:

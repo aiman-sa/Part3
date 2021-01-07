@@ -1,21 +1,17 @@
-import time
-import pandas as pd
+import math
+from project_4.searcher import Searcher
 from parser_module import Parse
 from indexer import Indexer
-import numpy as np
-from searcher import Searcher
-from scipy import linalg
+import pandas as pd
 
 class SearchEngine:
 
-    def __init__(self,config=None):
+    def __init__(self, config=None):
         self.Config = config
         self._indexer = Indexer(config)
-        self._parser = Parse(self._indexer,False)
+        self._parser = Parse(self._indexer, False)
         self._model = None
-        self._matrix={}
-        #self._matrix[0] = self._indexer.postingDict.keys()
-        #self._dataFrame={}
+        self._doc_data_dict = {}
 
     def build_index_from_parquet(self, fn):
         """
@@ -28,19 +24,17 @@ class SearchEngine:
         df = pd.read_parquet(fn, engine="pyarrow")
         documents_list = df.values.tolist()
         # Iterate over every document in the file
-        number_of_documents = 0
-        start_time = time.time()
+        self.number_of_documents = 0
         for idx, document in enumerate(documents_list):
             # parse the document
             parsed_document = self._parser.parse_doc(document)
-            number_of_documents += 1
+            self.number_of_documents += 1
             # index the document data
             self._indexer.add_new_doc(parsed_document)
-            self._matrix[parsed_document.tweet_id]=parsed_document.term_doc_dictionary
+            self._doc_data_dict[parsed_document.tweet_id]=parsed_document.term_doc_dictionary
         print('Finished parsing and indexing.')
+        self.c_matrix = self.create_c_of_doc()
         self._indexer.save_index("posting")
-        print(time.time() - start_time)
-
 
     def load_precomputed_model(self,model_dir):
         """
@@ -61,56 +55,80 @@ class SearchEngine:
             a list of tweet_ids where the first element is the most relavant
             and the last is the least relevant result.
         """
-
+        NUMBER_OF_LEARNING_DOC = 100
         searcher = Searcher(self._parser, self._indexer, model=self._model)
-        self.createMatrix(query)
-        searcher.DT=self.DT
-        searcher.q=self.q
-        return searcher.search(query)
+        searcher.number_of_documents=self.number_of_documents
+        dict_from_query = {}
+        self._parser.tokenSplit(query, dict_from_query)
+        assoicion_matrix = self.create_association_matrix(self.c_matrix, dict_from_query)
+        self.expand_qurey(dict_from_query, assoicion_matrix)
+        result=searcher.relevant_docs_from_posting(dict_from_query)
+        return len(result),result
 
-    def createMatrix(self,query):
-        d = {}
-        dictFromQuery = {}
-        self._parser.tokenSplit(query, dictFromQuery)
-        col = len(dictFromQuery)
-        vectorQuery = np.ones((col,), dtype=int)
-        for term in dictFromQuery.keys():
-            lst=self.getListTerms(term) #[1,[]]
-            for tuple1 in lst[1]:
-                d[tuple1[0]]=pd.Series(self.getFreq(dictFromQuery,tuple1[0]),index=[*dictFromQuery])
 
-        dataFrame=pd.DataFrame(d)
-        T, S, self.DT = linalg.svd(dataFrame, full_matrices=False)
-        InvS=np.zeros((len(S), len(S)))
-        for i in range(len(S)):
-            if S[i]==0:
-                InvS[i][i] = 0
-            else:
-                InvS[i][i]=1/S[i]
-        #InvS = np.linalg.inv(matrixS)
-        #transDt=np.transpose(self.DT)
-        vectorQueryTrans = np.transpose(vectorQuery)
-        temp = np.dot(vectorQueryTrans,T)
-        self.q = np.dot(temp, InvS)
+    def create_c_of_doc(self):
+        c_matrix = {}
+        for doc_id in self._doc_data_dict.keys():
+            doc_term_freq_dict = self._doc_data_dict[doc_id] #{tweet_id:[terms:f]}
+            if len(doc_term_freq_dict) == 0:
+                continue
+            # doc_term_freq_dict = doc_term_freq_dict[0]
+            for term_doc1, term_doc_freq1 in doc_term_freq_dict.items():
+                # for queryIndex in top_relevant_docs[doc_id][2]:
+                if term_doc1 not in c_matrix.keys():
+                    c_matrix[term_doc1] = {}
+                for term_doc2, term_doc_freq2 in doc_term_freq_dict.items():
+                    #if term_doc1 == term_doc2:
+                    if term_doc2 not in c_matrix[term_doc1]:
+                        c_matrix[term_doc1][term_doc2] = 0
+                    c_matrix[term_doc1][term_doc2] += term_doc_freq1 * term_doc_freq2  # Cii,Cjj,Cij
+        return c_matrix
 
-    def getFreq(self,dictQuery,tweetId):
-        lst=[]
-        for term in dictQuery.keys():
-            if term.lower() in self._matrix[tweetId]:
-                lst.append(self._matrix[tweetId][term.lower()])
-            elif term.upper() in self._matrix[tweetId]:
-                lst.append(self._matrix[tweetId][term.upper()])
-            else:
-                lst.append(0)
-        return lst
-    def getListTerms(self,term):
-        if term.lower() in self._indexer.postingDict:
-            return self._indexer.postingDict[term.lower()]
-        elif term.upper() in self._indexer.postingDict:
-            return self._indexer.postingDict[term.upper()]
-    def getIndex(self,term):
-        if term.lower() in self._indexer.postingDict:
-            return list(self._indexer.postingDict.keys()).index(term.lower())
-        elif term.upper() in self._indexer.postingDict:
-            return list(self._indexer.postingDict.keys()).index(term.upper())
+    def create_association_matrix(self, c_matrix, dict_from_query):
+        # c_matrix will be a dic of dic  {term: totalSum}
+        association_matrix = {}
+        # dict build as first serch of i and then cearch j (dict inside a dict)
+        for term in dict_from_query.keys():
+            # get all dict of all values association with terms
+            if term not in c_matrix.keys():
+                continue
+            association_terms_dict = c_matrix[term]
+            # create a dic of all associate terms
+            column_dict = {}
+            association_matrix[term] = column_dict
+            # run on the values and keys
+            for term_key, value in association_terms_dict.items():
+                c_term_key = 0
+                if term_key in c_matrix.keys():
+                    c_term_key = c_matrix[term_key][term_key]
+                if (c_matrix[term][term] + c_term_key - value) == 0:
+                    column_dict[term_key] = 0
+                else:
+                    column_dict[term_key] = value / (c_matrix[term][term] + c_term_key - value)
+        return association_matrix
 
+    def expand_qurey(self, dict_from_query, association_matrix):
+        MIN_REQUIREDMENT = 0.75
+        # the word we will insert
+        insert_dic_by_term = {}  # {index: [word1,word2]}
+        # run on all terms in qurey
+        for term, freq in dict_from_query.items():
+            # create a list to expand
+            term_associated_term = []
+            # save this list
+            insert_dic_by_term[term] = term_associated_term
+            # take the top association word with term
+            if term not in association_matrix.keys():
+                continue
+            column = association_matrix[term]
+            for inner_term, associated_value in column.items():
+                #  column.item = { term : associated value}
+                if associated_value >= MIN_REQUIREDMENT and inner_term != term:
+                    term_associated_term.append(inner_term)
+        try:
+            for term, list_added_word in insert_dic_by_term.items():
+                for inner_word in list_added_word:
+                    dict_from_query[inner_word] = dict_from_query[term]*association_matrix[term][inner_word]
+        except Exception as e:
+            print(e)
+        insert_dic_by_term.clear()

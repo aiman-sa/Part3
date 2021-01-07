@@ -1,15 +1,11 @@
 import math
-
-from parser_module import Parse
 from ranker import Ranker
-import utils
 from nltk.corpus import wordnet
 import nltk
 nltk.download('wordnet')
 class Searcher:
 
     def __init__(self, parser, indexer, model=None):
-        #lalala
         """
         :param inverted_index: dictionary of inverted index
         """

@@ -5,8 +5,7 @@ from parser_module import Parse
 from indexer import Indexer
 from reader import ReadFile
 from project_3.searcher import Searcher
-from nltk.corpus import wordnet
-
+from project_3.indexer import Indexer
 
 class SearchEngine:
 

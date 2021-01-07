@@ -34,7 +34,6 @@ class SearchEngine:
             self.number_of_documents += 1
             # index the document data
             self._indexer.add_new_doc(parsed_document)
-        self._indexer.postingDict = dict(sorted(self._indexer.postingDict.items(), key=lambda item: item[0], reverse=True))
         print('Finished parsing and indexing.')
 
     def load_precomputed_model(self,model_dir):

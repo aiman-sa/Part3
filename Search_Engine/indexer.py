@@ -1,7 +1,7 @@
 # DO NOT MODIFY CLASS NAME
 import pickle
 import utils
-from textblob import TextBlob
+from pyspellchecker.spellchecker import SpellChecker
 
 
 class Indexer:
@@ -16,8 +16,8 @@ class Indexer:
 
 
 
-    def spell_correction(self,misspell_word):
-        return TextBlob(misspell_word)
+    def spell_correction(self,word):
+        return SpellChecker().correction(word)
 
     # DO NOT MODIFY THIS SIGNATURE
     # You can change the internal implementation as you see fit.
