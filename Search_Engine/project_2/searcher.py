@@ -49,11 +49,12 @@ class Searcher:
                 if dic_value < worst_word[1]:
                     worst_word = (term,dic_value)
             except:
-                print()
+                continue
+
         if worst_word[0]==None:
-            return []
+            return self._ranker.get_relvant_docs(query_word_count, self._indexer.postingDict, self.number_of_documents,k)
         num_of_appear=query_word_count[worst_word[0]]
-        del query_word_count[worst_word[0]]
+        #del query_word_count[worst_word[0]]
         new_word = self.get_best_synset(worst_word[0])
         query_word_count[new_word] = num_of_appear
         return self._ranker.get_relvant_docs(query_word_count,self._indexer.postingDict,self.number_of_documents,k)

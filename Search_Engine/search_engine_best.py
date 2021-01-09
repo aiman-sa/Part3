@@ -1,8 +1,8 @@
-import math
 from project_best.searcher import Searcher
 from parser_module import Parse
 from indexer import Indexer
 import pandas as pd
+import utils
 
 class SearchEngine:
 
@@ -33,7 +33,6 @@ class SearchEngine:
             self._indexer.add_new_doc(parsed_document)
             self._doc_data_dict[parsed_document.tweet_id]=parsed_document.term_doc_dictionary
         print('Finished parsing and indexing.')
-        self._indexer.save_index("posting")
 
     def load_precomputed_model(self,model_dir):
         """
@@ -41,7 +40,7 @@ class SearchEngine:
         This is where you would load models like word2vec, LSI, LDA, etc. and
         assign to self._model, which is passed on to the searcher at query time.
         """
-        self._model=self
+        pass
 
     def search(self, query):
         """
@@ -138,3 +137,14 @@ class SearchEngine:
         except Exception as e:
             print(e)
         insert_dic_by_term.clear()
+
+    # DO NOT MODIFY THIS SIGNATURE
+    # You can change the internal implementation as you see fit.
+    def load_index(self, fn):
+        """
+        Loads a pre-computed index (or indices) so we can answer queries.
+        Input:
+            fn - file name of pickled index.
+        """
+        self.postingDict = utils.load_obj(fn)
+

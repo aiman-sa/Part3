@@ -12,7 +12,6 @@ if __name__ == '__main__':
 
     logging.basicConfig(filename='part_c_tests.log', level=logging.DEBUG,
                         filemode='w', format='%(levelname)s %(asctime)s: %(message)s')
-    import metrics
 
 
     def test_file_exists(fn):
@@ -40,6 +39,8 @@ if __name__ == '__main__':
 
     start = datetime.now()
     try:
+        import metrics
+
         # is the report there?
         test_file_exists('report_part_c.docx')
         # is benchmark data under 'data' folder?
@@ -47,7 +48,7 @@ if __name__ == '__main__':
         q2n_relevant = None
         if not test_file_exists(bench_data_path) or \
                 not test_file_exists(bench_lbls_path):
-            logging.error("Benchmark data does exist under the 'data' folder.")
+            logging.error("Benchmark data does not exist under the 'data' folder.")
             sys.exit(-1)
         else:
             bench_lbls = pd.read_csv(bench_lbls_path,
@@ -81,9 +82,11 @@ if __name__ == '__main__':
                 logging.info(f'Successfully downloaded and extracted pretrained model into {model_dir}.')
             else:
                 logging.error('model.zip file does not exists.')
+            if hasattr(config, 'model_dir'):
+                config.model_dir = model_dir
 
         # test for each search engine module
-        engine_modules = ['search_engine_' + name for name in ['best','1','2','3','4']]
+        engine_modules = ['search_engine_' + name for name in ['1', '2','3','4', 'best']]
         for engine_module in engine_modules:
             try:
                 # does the module file exist?

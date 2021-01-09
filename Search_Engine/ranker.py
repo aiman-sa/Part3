@@ -40,13 +40,17 @@ class Ranker:
                :return: dictionary of relevant documents.
                """
         # { doc_id: [doc tuple, list of the same terms](list in list)}
+        divid=1
         relevant_docs = {}
         for term, freq in parse_query.items():
             # for each document we will have the word they have the
+            divid = 1
             if term.lower() in posting:
                 term=term.lower()
             elif term.upper() in posting:
                 term=term.upper()
+                if " " in term:
+                    divid=1.5
             else:
                 continue
             try:  # an example of checks that you have to do
@@ -56,7 +60,7 @@ class Ranker:
                     doc_id, doc_freq = doc_tuple
                     if doc_id not in relevant_docs.keys():
                         relevant_docs[doc_id] = 0
-                    relevant_docs[doc_id] += self.weight_of_term(freq, num_of_docs, number_of_docs_with_term)
+                    relevant_docs[doc_id] += self.weight_of_term(freq, num_of_docs, number_of_docs_with_term)*divid
             except:
                 continue
         return self.rank_relevant_docs(relevant_docs,k)

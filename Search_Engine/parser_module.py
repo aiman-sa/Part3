@@ -79,7 +79,7 @@ class Parse:
             if character not in self.skip_list:
                 term += character  # keep building the term
             if (character == ' ' or character == '/' or character == ":" or character == '"' or character == '\n') and len(term) > 0:
-                if term=='RT' or term=='rt':
+                if term=='RT' or term=='rt' or term=='t.co' or term=='http' or term=='https':
                     term=''
                     continue
                 self.addToken(prev_term, term, term_dict)
@@ -125,6 +125,7 @@ class Parse:
                         # add dymbol
                         prev_term += self.numberList[word.lower()]
                         self.add_term_numbers_to_dict(prev_term, term_dict)
+                        return prev_term
                 # if this and prev are upper creante a new Term
                 if prev_term != '' and prev_term[0].isupper() and prev_term.upper() in self.terms_dic_to_document and word[0].isupper():
                     word2 = prev_term + " " + word
@@ -150,6 +151,8 @@ class Parse:
                         # lst.append(newW.lower())
                         self.add_term_to_dict(newW, term_dict)
                         return newW
+                    elif newW==word:
+                        return word
                 elif len(word) > 7:
                     for i in self.numberList:
                         if i in word:
@@ -264,64 +267,3 @@ class Parse:
             else:
                 term_dict[term.upper()] += 1
             self.terms_dic_to_document[term.upper()][0] += 1
-
-"""
-    def add_term_to_dict(self, term, term_dict):
-        term=str(term)
-        # if word not empty
-        if len(term) > 0:
-            # if we want to steam steam
-            if self.stemming:
-                term = self.toStem(term)
-            # if a new word (didn't see it before) in all doc
-            #if term.lower() not in self.terms_dic_to_document and term.upper() not in self.terms_dic_to_document:
-            if term.lower() not in self.indexer.postingDict and term.upper() not in self.indexer.postingDict:
-                if (term[0].isupper() and (term[1:].islower() or term[1:].isupper()) and term.isalpha()) or term[-1].upper() in self.numberList.values():
-                    if (term[0].isupper() and (term[1:].islower() or term[1:].isupper()) and term.isalpha()) or term[-1].upper() in self.numberList.values():
-                        term_dict[term.upper()] = 1
-                        #self.terms_dic_to_document[term.upper()] = 1
-                        self.indexer.postingDict[term.upper()]=[1,[]]
-                    else:
-                        # self.lower_set.add(term)
-                        term_dict[term.lower()] = 1
-                        #self.terms_dic_to_document[term.lower()] = 1
-                        self.indexer.postingDict[term.lower()]=[1,[]]
-                else:
-                    # self.lower_set.add(term)
-                    term_dict[term.lower()] = 1
-                    #self.terms_dic_to_document[term.lower()] = 1
-                    self.indexer.postingDict[term.lower()]=[1,[]]
-            # if appear as lower in all doc
-            #elif term.lower() in self.terms_dic_to_document:
-            elif term.lower() in self.indexer.postingDict:
-                # if first time in doc crate new else ++
-                if term not in term_dict:
-                    term_dict[term.lower()] = 1
-                else:
-                    term_dict[term.lower()] += 1
-                # inc the lower count
-                #self.terms_dic_to_document[term.lower()] += 1
-                self.indexer.postingDict[term.lower()][0]+=1
-            # if appear as upper in all doc
-            #elif term.upper() in self.terms_dic_to_document:
-            elif term.upper() in self.indexer.postingDict:
-                if term[0].isupper() or term[-1].upper() in self.numberList.values():
-                    if term.upper() not in term_dict:
-                        term_dict[term.upper()] = 1
-                    else:
-                        term_dict[term.upper()] += 1
-                    #self.terms_dic_to_document[term.upper()] += 1
-                    self.indexer.postingDict[term.upper()][0]+=1
-                else:
-                    #self.terms_dic_to_document[term.lower()] = self.terms_dic_to_document[term.upper()]+1
-                    #del self.terms_dic_to_document[term.upper()]
-                    self.indexer.postingDict[term.lower()]=self.indexer.postingDict[term.upper()]
-                    self.indexer.postingDict[term.lower()][0]+=1
-                    del  self.indexer.postingDict[term.upper()]
-
-                    if term.upper() in term_dict:
-                        term_dict[term.lower()] = term_dict[term.upper()]+1
-                        del term_dict[term.upper()]
-                    else:
-                        term_dict[term.lower()] = 1
-"""

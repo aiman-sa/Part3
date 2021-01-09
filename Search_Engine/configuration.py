@@ -9,6 +9,7 @@ class ConfigClass:
         # in subsequent submissions to avoid the slow downloading of the large
         # model file with every submission.
         self._download_model = False
+        self._model_dir = None
 
         self.corpusPath = ''
         self.savedFileMainFolder = ''
@@ -18,7 +19,7 @@ class ConfigClass:
         self.google_news_vectors_negative300_path = '../../../../GoogleNews-vectors-negative300.bin'
         self.glove_twitter_27B_25d_path = '../../../../glove.twitter.27B.25d.txt'
 
-        print('Project was created successfully..')
+        # print('Project was created successfully..')
 
     def get__corpusPath(self):
         return self.corpusPath
@@ -28,3 +29,11 @@ class ConfigClass:
 
     def get_download_model(self):
         return self._download_model
+
+    @property
+    def model_dir(self):
+        return self._model_dir
+
+    @model_dir.setter
+    def model_dir(self, model_dir):
+        self._model_dir = model_dir

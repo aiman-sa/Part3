@@ -57,9 +57,7 @@ class Indexer:
         Input:
             fn - file name of pickled index.
         """
-        print('Load inverted index')
-        inverted_index = utils.load_obj(fn)
-        return inverted_index
+        self.postingDict = utils.load_obj(fn)
 
 
     # DO NOT MODIFY THIS SIGNATURE
@@ -90,8 +88,6 @@ class Indexer:
         return self.postingDict[term] if self._is_term_exist(term) else []
 
     def addEntitysToPosting(self, term, tweet_id, quantity):
-        if term not in self.postingDict:
-            return
         if term.upper() not in self.Entitys and term.upper() not in self.postingDict:  # Entitys=>{"DONALD TRUMP:(12,3)},inverted_idx=> {DONALD TRUMP}
             self.Entitys[term.upper()] = (tweet_id, quantity)
         else:

@@ -36,13 +36,10 @@ class Searcher:
             except:
                 continue
         if worst_word[0] == None:
-            return []
+            return self._ranker.get_relvant_docs(query_word_count, self._indexer.postingDict, self.number_of_documents, k)
         new_word = self.get_best_synset(worst_word[0])
-        #divider = (len(self._indexer.postingDict[new_word][1])/self._indexer.postingDict[new_word][0])/\
-        #          (len(self._indexer.postingDict[worst_word[0]][1])/self._indexer.postingDict[worst_word[0]][0])
         num_of_appear = query_word_count[worst_word[0]]
-        #query_word_count[worst_word[0]] = num_of_appear/divider
-        # del query_word_count[worst_word[0]]
+        #del query_word_count[worst_word[0]] #??????????????????
         query_word_count[new_word] = num_of_appear
         return self._ranker.get_relvant_docs(query_word_count, self._indexer.postingDict, self.number_of_documents, k)
 
@@ -62,4 +59,3 @@ class Searcher:
                     best_appear = len(self._indexer.postingDict[lem][1])/self._indexer.postingDict[lem][0]
                     best_term = lem
         return best_term
-

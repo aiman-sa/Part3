@@ -1,9 +1,6 @@
 import pandas as pd
-
-import utils
 from parser_module import Parse
 from indexer import Indexer
-from reader import ReadFile
 from project_3.searcher import Searcher
 from project_3.indexer import Indexer
 
@@ -38,14 +35,14 @@ class SearchEngine:
             self._indexer.add_new_doc(parsed_document)
         print('Finished parsing and indexing.')
 
+
     def load_precomputed_model(self,model_dir):
         """
         Loads a pre-computed model (or models) so we can answer queries.
         This is where you would load models like word2vec, LSI, LDA, etc. and
         assign to self._model, which is passed on to the searcher at query time.
         """
-        self._model=self
-
+        pass
 
     def search(self, query):
         """
